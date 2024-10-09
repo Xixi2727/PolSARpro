@@ -107,42 +107,6 @@ class PolSARpro:
         ]
         subprocess.run(command, text=True)
 
-    def rawbinary_convert_RealImag_S2(self, ieee, symmetrisation, subsampling_az, subsampling_rg, file1, file2, file3, file4, file5, file6, file7, file8):
-        program_path = os.path.join(self.soft_path, "data_import", "rawbinary_convert_RealImag_S2.exe")
-        command = [
-            program_path,
-            self.output_dir,
-            str(self.col_final-self.col_offset),
-            str(self.row_offset),
-            str(self.col_offset),
-            str(self.row_final),
-            str(self.col_final),
-            str(ieee),
-            str(symmetrisation),
-            self.pol_type,
-            str(subsampling_az),
-            str(subsampling_rg),
-            file1, file2, file3, file4, file5, file6, file7, file8
-        ]
-        subprocess.run(command, text=True)
-        self.create_mask_valid_pixels()
-        self.create_bmp_file(os.path.join(self.output_dir, "mask_valid_pixels.bin"), os.path.join(self.output_dir, "mask_valid_pixels.bmp"), "float", "real", "jet", 1, 0, 1, "black")
-        self.create_pauli_rgb_file(self.output_dir, self.output_dir, 1, 0, 0, 0, 0, 0, 0)
-
-
-class SpeckleFilter(PolSARpro):
-    # input_output_format = ""           # 输入-输出格式。只给出单格式则输入输出格式相同
-    # num_looks = 0                      # 多视
-    # k_coefficient = 0                  # k参数
-    # window_size = 0                    # 窗口大小
-    # patch_window_size_row = 0          # 补丁窗口行大小
-    # patch_window_size_col = 0          # 补丁窗口列大小
-    # searching_window_size_row = 0      # 搜索窗口行大小
-    # searching_window_size_col = 0      # 搜索窗口列大小
-
-    def __init__(self, soft_path, input_dir, output_dir, pol_type, row_offset, col_offset, row_final, col_final):
-        super().__init__(soft_path, input_dir, output_dir, pol_type, row_offset, col_offset, row_final, col_final)
-
     def an_yang_filter(self, input_output_format, num_looks, k_coefficient, patch_window_size_row, patch_window_size_col, searching_window_size_row, searching_window_size_col):
         program_path = os.path.join(self.soft_path, "speckle_filter", "an_yang_filter.exe")
         command = [
@@ -184,11 +148,6 @@ class SpeckleFilter(PolSARpro):
         subprocess.run(command, text=True)
         if len(input_output_format) == 4:
             self.pol_type = input_output_format[-2:]
-
-
-class PolDecomposition(PolSARpro):
-    def __init__(self, soft_path, input_dir, output_dir, pol_type, row_offset, col_offset, row_final, col_final):
-        super().__init__(soft_path, input_dir, output_dir, pol_type, row_offset, col_offset, row_final, col_final)
 
     def h_a_alpha_decomposition(self, flag_parameters, flag_lambda, flag_alpha, flag_entropy, flag_anisotropy, flag_comb_ha, flag_comb_h1ma, flag_comb_1mha, flag_comb_1mh1ma, window_size_row, window_size_col):
         program_path = os.path.join(self.soft_path, "data_process_sngl", "h_a_alpha_decomposition.exe")
@@ -320,11 +279,6 @@ class PolDecomposition(PolSARpro):
             self.create_bmp_file(os.path.join(new_dir, input_file), os.path.join(new_dir, f"Cloude_{os.path.splitext(input_file)[0]}_dB.bmp"), "float", "db10", "gray", 1, 0, 1, "black")
         self.create_pauli_rgb_file(new_dir, os.path.join(new_dir, "Cloude_RGB.bmp"), 1, 0, 0, 0, 0, 0, 0)
 
-
-class Tools(PolSARpro):
-    def __init__(self, soft_path, input_dir, output_dir, pol_type, row_offset, col_offset, row_final, col_final):
-        super().__init__(soft_path, input_dir, output_dir, pol_type, row_offset, col_offset, row_final, col_final)
-
     def process_elements(self, element_index, process_format):
         program_path = os.path.join(self.soft_path, "data_process_sngl", "process_elements.exe")
         command = [
@@ -352,3 +306,80 @@ class Tools(PolSARpro):
         else:
             file_name = self.pol_type[0] + element_index + "_mod"
         self.create_bmp_file(os.path.join(self.output_dir, file_name+".bin"), os.path.join(self.output_dir, file_name+".bmp"), "float", "real", "gray", 1, 0, 1, "black")
+
+    def process_corr(self, element_index, window_size_row, window_size_col):
+        program_path = os.path.join(self.soft_path, "data_process_sngl", "process_corr.exe")
+        command = [
+            program_path,
+            "-id", self.input_dir,
+            "-od", self.output_dir,
+            "-iodf", self.pol_type,
+            "-ofr", str(self.row_offset),
+            "-ofc", str(self.col_offset),
+            "-fnr", str(self.row_final),
+            "-fnc", str(self.col_final),
+            "-elt", str(element_index),
+            "-nwr", str(window_size_row),
+            "-nwc", str(window_size_col),
+            "-mask", self.mask_file
+        ]
+        subprocess.run(command, text=True)
+        self.create_bmp_file(os.path.join(self.output_dir, "Ro"+element_index+".bin"), os.path.join(self.output_dir, "Ro"+element_index+"_mod.bmp"), "cmplx", "mod", "jet", 0, 0, 1, "black")
+        self.create_bmp_file(os.path.join(self.output_dir, "Ro"+element_index+".bin"), os.path.join(self.output_dir, "Ro"+element_index+"_pha.bmp"), "cmplx", "pha", "hsv", 0, -180, 180, "black")
+
+    def orientation_compensation(self, window_size_row, window_size_col):
+        program_path = os.path.join(self.soft_path, "data_process_sngl", "orientation_estimation.exe")
+        command = [
+            program_path,
+            "-id", self.input_dir,
+            "-od", self.output_dir,
+            "-iodf", self.pol_type,
+            "-ofr", str(self.row_offset),
+            "-ofc", str(self.col_offset),
+            "-fnr", str(self.row_final),
+            "-fnc", str(self.col_final),
+            "-nwr", str(window_size_row),
+            "-nwc", str(window_size_col),
+            "-mask", self.mask_file
+        ]
+        subprocess.run(command, text=True)
+
+# class SpeckleFilter(PolSARpro):
+#     # input_output_format = ""           # 输入-输出格式。只给出单格式则输入输出格式相同
+#     # num_looks = 0                      # 多视
+#     # k_coefficient = 0                  # k参数
+#     # window_size = 0                    # 窗口大小
+#     # patch_window_size_row = 0          # 补丁窗口行大小
+#     # patch_window_size_col = 0          # 补丁窗口列大小
+#     # searching_window_size_row = 0      # 搜索窗口行大小
+#     # searching_window_size_col = 0      # 搜索窗口列大小
+#
+#     def __init__(self, soft_path, input_dir, output_dir, pol_type, row_offset, col_offset, row_final, col_final):
+#         super().__init__(soft_path, input_dir, output_dir, pol_type, row_offset, col_offset, row_final, col_final)
+# class PolDecomposition(PolSARpro):
+#     def __init__(self, soft_path, input_dir, output_dir, pol_type, row_offset, col_offset, row_final, col_final):
+#         super().__init__(soft_path, input_dir, output_dir, pol_type, row_offset, col_offset, row_final, col_final)
+# class Tools(PolSARpro):
+#     def __init__(self, soft_path, input_dir, output_dir, pol_type, row_offset, col_offset, row_final, col_final):
+#         super().__init__(soft_path, input_dir, output_dir, pol_type, row_offset, col_offset, row_final, col_final)
+# def rawbinary_convert_RealImag_S2(self, ieee, symmetrisation, subsampling_az, subsampling_rg, file1, file2, file3, file4, file5, file6, file7, file8):
+#     program_path = os.path.join(self.soft_path, "data_import", "rawbinary_convert_RealImag_S2.exe")
+#     command = [
+#         program_path,
+#         self.output_dir,
+#         str(self.col_final-self.col_offset),
+#         str(self.row_offset),
+#         str(self.col_offset),
+#         str(self.row_final),
+#         str(self.col_final),
+#         str(ieee),
+#         str(symmetrisation),
+#         self.pol_type,
+#         str(subsampling_az),
+#         str(subsampling_rg),
+#         file1, file2, file3, file4, file5, file6, file7, file8
+#     ]
+#     subprocess.run(command, text=True)
+#     self.create_mask_valid_pixels()
+#     self.create_bmp_file(os.path.join(self.output_dir, "mask_valid_pixels.bin"), os.path.join(self.output_dir, "mask_valid_pixels.bmp"), "float", "real", "jet", 1, 0, 1, "black")
+#     self.create_pauli_rgb_file(self.output_dir, self.output_dir, 1, 0, 0, 0, 0, 0, 0)
