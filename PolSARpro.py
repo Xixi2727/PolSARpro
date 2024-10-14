@@ -23,6 +23,10 @@ class PolSARpro:
         self.col_offset = col_offset
         self.row_final = row_final
         self.col_final = col_final
+        self.mask_file = os.path.join(self.input_dir, "mask_valid_pixels.bin")
+        if not os.path.exists(os.path.join(self.input_dir, "mask_valid_pixels.bin")):
+            self.create_mask_valid_pixels()
+            self.create_bmp_file(os.path.join(self.input_dir, "mask_valid_pixels.bin"), os.path.join(self.input_dir, "mask_valid_pixels.bmp"), "float", "real", "jet", 0, 0, 1, "black")
 
     def create_mask_valid_pixels(self):
         program_path = os.path.join(self.soft_path, "tools", "create_mask_valid_pixels.exe")
@@ -36,7 +40,7 @@ class PolSARpro:
             "-fnr", str(self.row_final),
             "-fnc", str(self.col_final)
         ]
-        subprocess.run(command, text=True)
+        subprocess.run(command)
         self.mask_file = os.path.join(self.output_dir, "mask_valid_pixels.bin")
 
     def create_bmp_file(self, input_file, output_file, input_format, output_format, colormap, min_max_auto, min_val, max_val, mask_file_color):
@@ -59,7 +63,7 @@ class PolSARpro:
             "-mask", self.mask_file,
             "-mcol", mask_file_color                         # mask file color (white, gray, black)
         ]
-        subprocess.run(command, text=True)
+        subprocess.run(command)
 
     def create_pauli_rgb_file(self, input_dir, output_file, min_max_auto, blue_min, blue_max, red_min, red_max, green_min, green_max):
         program_path = os.path.join(self.soft_path, "bmp_process", "create_pauli_rgb_file.exe")
@@ -81,7 +85,7 @@ class PolSARpro:
             "-maxg", str(green_max),
             "-mask", self.mask_file
         ]
-        subprocess.run(command, text=True)
+        subprocess.run(command)
 
     def create_rgb_file(self, blue_file, red_file, green_file, output_file, min_max_auto, blue_min, blue_max, red_min, red_max, green_min, green_max):
         program_path = os.path.join(self.soft_path, "bmp_process", "create_rgb_file.exe")
@@ -105,9 +109,15 @@ class PolSARpro:
             "-maxg", str(green_max),
             "-mask", self.mask_file
         ]
-        subprocess.run(command, text=True)
+        subprocess.run(command)
 
     def an_yang_filter(self, input_output_format, num_looks, k_coefficient, patch_window_size_row, patch_window_size_col, searching_window_size_row, searching_window_size_col):
+        new_dir = os.path.abspath(os.path.join(self.input_dir, os.path.pardir, os.path.basename(self.input_dir)+"_PRE", self.pol_type))
+        if len(input_output_format) == 4:
+            new_dir = os.path.abspath(os.path.join(self.input_dir, os.path.pardir, os.path.basename(self.input_dir)+"_PRE", input_output_format[-2:]))
+        if not os.path.exists(new_dir):
+            os.makedirs(new_dir)
+        self.output_dir = new_dir
         program_path = os.path.join(self.soft_path, "speckle_filter", "an_yang_filter.exe")
         command = [
             program_path,
@@ -126,11 +136,21 @@ class PolSARpro:
             "-swc", str(searching_window_size_col),    # 搜索窗口列大小
             "-mask", self.mask_file
         ]
-        subprocess.run(command, text=True)
+        subprocess.run(command, text=True, stdout=None, stderr=None)
+        shutil.copy(os.path.join(self.input_dir, "config.txt"), os.path.join(self.output_dir, "config.txt"))
+        self.input_dir = self.output_dir
         if len(input_output_format) == 4:
             self.pol_type = input_output_format[-2:]
+        self.create_mask_valid_pixels()
+        self.create_bmp_file(os.path.join(self.output_dir, "mask_valid_pixels.bin"), os.path.join(self.output_dir, "mask_valid_pixels.bmp"), "float", "real", "jet", 0, 0, 1, "black")
 
     def lee_refined_filter(self, input_output_format, num_looks, window_size):
+        new_dir = os.path.abspath(os.path.join(self.input_dir, os.path.pardir, os.path.basename(self.input_dir) + "_LEE", self.pol_type))
+        if len(input_output_format) == 4:
+            new_dir = os.path.abspath(os.path.join(self.input_dir, os.path.pardir, os.path.basename(self.input_dir) + "_LEE", input_output_format[-2:]))
+        if not os.path.exists(new_dir):
+            os.makedirs(new_dir)
+        self.output_dir = new_dir
         program_path = os.path.join(self.soft_path, "speckle_filter", "lee_refined_filter.exe")
         command = [
             program_path,
@@ -145,9 +165,13 @@ class PolSARpro:
             "-nw", str(window_size),         # 窗口大小
             "-mask", self.mask_file
         ]
-        subprocess.run(command, text=True)
+        subprocess.run(command)
+        shutil.copy(os.path.join(self.input_dir, "config.txt"), os.path.join(self.output_dir, "config.txt"))
+        self.input_dir = self.output_dir
         if len(input_output_format) == 4:
             self.pol_type = input_output_format[-2:]
+        self.create_mask_valid_pixels()
+        self.create_bmp_file(os.path.join(self.output_dir, "mask_valid_pixels.bin"), os.path.join(self.output_dir, "mask_valid_pixels.bmp"), "float", "real", "jet", 0, 0, 1, "black")
 
     def h_a_alpha_decomposition(self, flag_parameters, flag_lambda, flag_alpha, flag_entropy, flag_anisotropy, flag_comb_ha, flag_comb_h1ma, flag_comb_1mha, flag_comb_1mh1ma, window_size_row, window_size_col):
         program_path = os.path.join(self.soft_path, "data_process_sngl", "h_a_alpha_decomposition.exe")
@@ -173,7 +197,7 @@ class PolSARpro:
             "-nwc", str(window_size_col),
             "-mask", self.mask_file
         ]
-        subprocess.run(command, text=True)
+        subprocess.run(command)
         if flag_parameters == 1:
             self.create_bmp_file(os.path.join(self.output_dir, "alpha.bin"), os.path.join(self.output_dir, "alpha.bmp"), "float", "real", "jet", 1, 0, 1, "black")
             self.create_bmp_file(os.path.join(self.output_dir, "beta.bin"), os.path.join(self.output_dir, "beta.bmp"), "float", "real", "jet", 1, 0, 1, "black")
@@ -197,7 +221,7 @@ class PolSARpro:
             "-nwc", str(window_size_col),
             "-mask", self.mask_file
         ]
-        subprocess.run(command, text=True)
+        subprocess.run(command)
         input_files = ["Yamaguchi4_Y4O_Odd.bin", "Yamaguchi4_Y4O_Dbl.bin", "Yamaguchi4_Y4O_Vol.bin", "Yamaguchi4_Y4O_Hlx.bin"]
         for input_file in input_files:
             self.create_bmp_file(os.path.join(self.output_dir, input_file), os.path.join(self.output_dir, f"{os.path.splitext(input_file)[0]}_db.bmp"), "float", "db10", "gray", 1, 0, 1, "black")
@@ -205,6 +229,8 @@ class PolSARpro:
     def huynen_decomposition(self, input_output_format, window_size_row, window_size_col):
         program_path = os.path.join(self.soft_path, "data_process_sngl", "huynen_decomposition.exe")
         new_dir = os.path.join(self.input_dir, "JRH")
+        if not os.path.exists(new_dir):
+            os.makedirs(new_dir)
         command = [
             program_path,
             "-id", self.input_dir,
@@ -218,7 +244,7 @@ class PolSARpro:
             "-nwc", str(window_size_col),
             "-mask", self.mask_file
         ]
-        subprocess.run(command, text=True)
+        subprocess.run(command)
         if self.pol_type == "S2":
             self.pol_type = input_output_format[-2:]
         shutil.copy(os.path.join(self.input_dir, "config.txt"), os.path.join(new_dir, "config.txt"))
@@ -245,7 +271,7 @@ class PolSARpro:
             "-nwc", str(window_size_col),
             "-mask", self.mask_file
         ]
-        subprocess.run(command, text=True)
+        subprocess.run(command)
         input_files = ["Krogager_Ks.bin", "Krogager_Kd.bin", "Krogager_Kh.bin"]
         for input_file in input_files:
             self.create_bmp_file(os.path.join(self.output_dir, input_file), os.path.join(self.output_dir, f"{os.path.splitext(input_file)[0]}_db.bmp"), "float", "db10", "gray", 1, 0, 1, "black")
@@ -254,6 +280,8 @@ class PolSARpro:
     def cloude_decomposition(self, input_output_format, window_size_row, window_size_col):
         program_path = os.path.join(self.soft_path, "data_process_sngl", "cloude_decomposition.exe")
         new_dir = os.path.join(self.input_dir, "SRC")
+        if not os.path.exists(new_dir):
+            os.makedirs(new_dir)
         command = [
             program_path,
             "-id", self.input_dir,
@@ -267,7 +295,7 @@ class PolSARpro:
             "-nwc", str(window_size_col),
             "-mask", self.mask_file
         ]
-        subprocess.run(command, text=True)
+        subprocess.run(command)
         if self.pol_type == "S2":
             self.pol_type = input_output_format[-2:]
         shutil.copy(os.path.join(self.input_dir, "config.txt"), os.path.join(new_dir, "config.txt"))
@@ -294,7 +322,7 @@ class PolSARpro:
             "-fmt", process_format,        # S2, SPP, IPP: A, Adb, I, Idb, pha    C3, T3: mod, db, pha
             "-mask", self.mask_file
         ]
-        subprocess.run(command, text=True)
+        subprocess.run(command)
         if process_format == "A":
             file_name = "A" + element_index
         elif process_format == "I":
@@ -323,7 +351,7 @@ class PolSARpro:
             "-nwc", str(window_size_col),
             "-mask", self.mask_file
         ]
-        subprocess.run(command, text=True)
+        subprocess.run(command)
         self.create_bmp_file(os.path.join(self.output_dir, "Ro"+element_index+".bin"), os.path.join(self.output_dir, "Ro"+element_index+"_mod.bmp"), "cmplx", "mod", "jet", 0, 0, 1, "black")
         self.create_bmp_file(os.path.join(self.output_dir, "Ro"+element_index+".bin"), os.path.join(self.output_dir, "Ro"+element_index+"_pha.bmp"), "cmplx", "pha", "hsv", 0, -180, 180, "black")
 
@@ -342,7 +370,7 @@ class PolSARpro:
             "-nwc", str(window_size_col),
             "-mask", self.mask_file
         ]
-        subprocess.run(command, text=True)
+        subprocess.run(command)
 
 # class SpeckleFilter(PolSARpro):
 #     # input_output_format = ""           # 输入-输出格式。只给出单格式则输入输出格式相同
@@ -379,7 +407,7 @@ class PolSARpro:
 #         str(subsampling_rg),
 #         file1, file2, file3, file4, file5, file6, file7, file8
 #     ]
-#     subprocess.run(command, text=True)
+#     subprocess.run(command)
 #     self.create_mask_valid_pixels()
 #     self.create_bmp_file(os.path.join(self.output_dir, "mask_valid_pixels.bin"), os.path.join(self.output_dir, "mask_valid_pixels.bmp"), "float", "real", "jet", 1, 0, 1, "black")
 #     self.create_pauli_rgb_file(self.output_dir, self.output_dir, 1, 0, 0, 0, 0, 0, 0)
