@@ -173,7 +173,16 @@ class PolSARpro:
         self.create_mask_valid_pixels()
         self.create_bmp_file(os.path.join(self.output_dir, "mask_valid_pixels.bin"), os.path.join(self.output_dir, "mask_valid_pixels.bmp"), "float", "real", "jet", 0, 0, 1, "black")
 
-    def h_a_alpha_decomposition(self, flag_parameters, flag_lambda, flag_alpha, flag_entropy, flag_anisotropy, flag_comb_ha, flag_comb_h1ma, flag_comb_1mha, flag_comb_1mh1ma, window_size_row, window_size_col):
+    def h_a_alpha_decomposition(self, flag_parameters, flag_h_a_alpha, flag_comb_ha, flag_comb_h1ma, flag_comb_1mha, flag_comb_1mh1ma, window_size_row, window_size_col):
+        if flag_h_a_alpha == 1:
+            flag_alpha = 1
+            flag_entropy = 1
+            flag_anisotropy = 1
+        else:
+            flag_alpha = 0
+            flag_entropy = 0
+            flag_anisotropy = 0
+        flag_lambda = 0
         program_path = os.path.join(self.soft_path, "data_process_sngl", "h_a_alpha_decomposition.exe")
         command = [
             program_path,
@@ -199,11 +208,23 @@ class PolSARpro:
         ]
         subprocess.run(command)
         if flag_parameters == 1:
-            self.create_bmp_file(os.path.join(self.output_dir, "alpha.bin"), os.path.join(self.output_dir, "alpha.bmp"), "float", "real", "jet", 1, 0, 1, "black")
-            self.create_bmp_file(os.path.join(self.output_dir, "beta.bin"), os.path.join(self.output_dir, "beta.bmp"), "float", "real", "jet", 1, 0, 1, "black")
-            self.create_bmp_file(os.path.join(self.output_dir, "delta.bin"), os.path.join(self.output_dir, "delta.bmp"), "float", "real", "hsv", 1, 0, 1, "black")
-            self.create_bmp_file(os.path.join(self.output_dir, "gamma.bin"), os.path.join(self.output_dir, "gamma.bmp"), "float", "real", "hsv", 1, 0, 1, "black")
+            self.create_bmp_file(os.path.join(self.output_dir, "alpha.bin"), os.path.join(self.output_dir, "alpha.bmp"), "float", "real", "jet", 0, 0, 1, "black")
+            self.create_bmp_file(os.path.join(self.output_dir, "beta.bin"), os.path.join(self.output_dir, "beta.bmp"), "float", "real", "jet", 0, 0, 1, "black")
+            self.create_bmp_file(os.path.join(self.output_dir, "delta.bin"), os.path.join(self.output_dir, "delta.bmp"), "float", "real", "hsv", 0, 0, 1, "black")
+            self.create_bmp_file(os.path.join(self.output_dir, "gamma.bin"), os.path.join(self.output_dir, "gamma.bmp"), "float", "real", "hsv", 0, 0, 1, "black")
             self.create_bmp_file(os.path.join(self.output_dir, "lambda.bin"), os.path.join(self.output_dir, "lambda_db.bmp"), "float", "db10", "gray", 1, 0, 1, "black")
+        if flag_h_a_alpha == 1:
+            self.create_bmp_file(os.path.join(self.output_dir, "alpha.bin"), os.path.join(self.output_dir, "alpha.bmp"), "float", "real", "jet", 0, 0, 1, "black")
+            self.create_bmp_file(os.path.join(self.output_dir, "entropy.bin"), os.path.join(self.output_dir, "entropy.bmp"), "float", "real", "jet", 0, 0, 1, "black")
+            self.create_bmp_file(os.path.join(self.output_dir, "anisotropy.bin"), os.path.join(self.output_dir, "anisotropy.bmp"), "float", "real", "jet", 0, 0, 1, "black")
+        if flag_comb_ha == 1:
+            self.create_bmp_file(os.path.join(self.output_dir, "combination_HA.bin"), os.path.join(self.output_dir, "combination_HA.bmp"), "float", "real", "jet", 0, 0, 1, "black")
+        if flag_comb_h1ma == 1:
+            self.create_bmp_file(os.path.join(self.output_dir, "combination_H1mA.bin"), os.path.join(self.output_dir, "combination_H1mA.bmp"), "float", "real", "jet", 0, 0, 1, "black")
+        if flag_comb_1mha == 1:
+            self.create_bmp_file(os.path.join(self.output_dir, "combination_1mHA.bin"), os.path.join(self.output_dir, "combination_1mHA.bmp"), "float", "real", "jet", 0, 0, 1, "black")
+        if flag_comb_1mh1ma == 1:
+            self.create_bmp_file(os.path.join(self.output_dir, "combination_1mH1mA.bin"), os.path.join(self.output_dir, "combination_1mH1mA.bmp"), "float", "real", "jet", 0, 0, 1, "black")
 
     def yamaguchi_4components_decomposition(self, mode, window_size_row, window_size_col):
         program_path = os.path.join(self.soft_path, "data_process_sngl", "yamaguchi_4components_decomposition.exe")
@@ -372,42 +393,29 @@ class PolSARpro:
         ]
         subprocess.run(command)
 
-# class SpeckleFilter(PolSARpro):
-#     # input_output_format = ""           # 输入-输出格式。只给出单格式则输入输出格式相同
-#     # num_looks = 0                      # 多视
-#     # k_coefficient = 0                  # k参数
-#     # window_size = 0                    # 窗口大小
-#     # patch_window_size_row = 0          # 补丁窗口行大小
-#     # patch_window_size_col = 0          # 补丁窗口列大小
-#     # searching_window_size_row = 0      # 搜索窗口行大小
-#     # searching_window_size_col = 0      # 搜索窗口列大小
-#
-#     def __init__(self, soft_path, input_dir, output_dir, pol_type, row_offset, col_offset, row_final, col_final):
-#         super().__init__(soft_path, input_dir, output_dir, pol_type, row_offset, col_offset, row_final, col_final)
-# class PolDecomposition(PolSARpro):
-#     def __init__(self, soft_path, input_dir, output_dir, pol_type, row_offset, col_offset, row_final, col_final):
-#         super().__init__(soft_path, input_dir, output_dir, pol_type, row_offset, col_offset, row_final, col_final)
+
 # class Tools(PolSARpro):
 #     def __init__(self, soft_path, input_dir, output_dir, pol_type, row_offset, col_offset, row_final, col_final):
 #         super().__init__(soft_path, input_dir, output_dir, pol_type, row_offset, col_offset, row_final, col_final)
-# def rawbinary_convert_RealImag_S2(self, ieee, symmetrisation, subsampling_az, subsampling_rg, file1, file2, file3, file4, file5, file6, file7, file8):
-#     program_path = os.path.join(self.soft_path, "data_import", "rawbinary_convert_RealImag_S2.exe")
-#     command = [
-#         program_path,
-#         self.output_dir,
-#         str(self.col_final-self.col_offset),
-#         str(self.row_offset),
-#         str(self.col_offset),
-#         str(self.row_final),
-#         str(self.col_final),
-#         str(ieee),
-#         str(symmetrisation),
-#         self.pol_type,
-#         str(subsampling_az),
-#         str(subsampling_rg),
-#         file1, file2, file3, file4, file5, file6, file7, file8
-#     ]
-#     subprocess.run(command)
-#     self.create_mask_valid_pixels()
-#     self.create_bmp_file(os.path.join(self.output_dir, "mask_valid_pixels.bin"), os.path.join(self.output_dir, "mask_valid_pixels.bmp"), "float", "real", "jet", 1, 0, 1, "black")
-#     self.create_pauli_rgb_file(self.output_dir, self.output_dir, 1, 0, 0, 0, 0, 0, 0)
+#
+#     def rawbinary_convert_RealImag_S2(self, ieee, symmetrisation, subsampling_az, subsampling_rg, file1, file2, file3, file4, file5, file6, file7, file8):
+#         program_path = os.path.join(self.soft_path, "data_import", "rawbinary_convert_RealImag_S2.exe")
+#         command = [
+#             program_path,
+#             self.output_dir,
+#             str(self.col_final-self.col_offset),
+#             str(self.row_offset),
+#             str(self.col_offset),
+#             str(self.row_final),
+#             str(self.col_final),
+#             str(ieee),
+#             str(symmetrisation),
+#             self.pol_type,
+#             str(subsampling_az),
+#             str(subsampling_rg),
+#             file1, file2, file3, file4, file5, file6, file7, file8
+#         ]
+#         subprocess.run(command)
+#         self.create_mask_valid_pixels()
+#         self.create_bmp_file(os.path.join(self.output_dir, "mask_valid_pixels.bin"), os.path.join(self.output_dir, "mask_valid_pixels.bmp"), "float", "real", "jet", 1, 0, 1, "black")
+#         self.create_pauli_rgb_file(self.output_dir, self.output_dir, 1, 0, 0, 0, 0, 0, 0)
