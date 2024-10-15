@@ -174,6 +174,10 @@ class PolSARpro:
         self.create_bmp_file(os.path.join(self.output_dir, "mask_valid_pixels.bin"), os.path.join(self.output_dir, "mask_valid_pixels.bmp"), "float", "real", "jet", 0, 0, 1, "black")
 
     def h_a_alpha_decomposition(self, flag_parameters, flag_h_a_alpha, flag_comb_ha, flag_comb_h1ma, flag_comb_1mha, flag_comb_1mh1ma, window_size_row, window_size_col):
+        if self.pol_type == "S2":
+            input_output_format = "S2T3"    # 虽然源代码中有"S2T3", "S2C3", "S2T4", "S2C4"这几个参数，但是实际使用PolSARpro时并没有选择输出格式的选项，也不会输出转换后格式的文件
+        else:
+            input_output_format = self.pol_type
         if flag_h_a_alpha == 1:
             flag_alpha = 1
             flag_entropy = 1
@@ -188,7 +192,7 @@ class PolSARpro:
             program_path,
             "-id", self.input_dir,
             "-od", self.output_dir,
-            "-iodf", self.pol_type,    # "S2T3", "S2C3", "S2T4", "S2C4", "SPPC2", "C2", "C3", "C3T3", "C4", "C4T4", "T3", "T4"
+            "-iodf", input_output_format,    # "S2T3", "S2C3", "S2T4", "S2C4", "SPPC2", "C2", "C3", "C3T3", "C4", "C4T4", "T3", "T4"
             "-ofr", str(self.row_offset),
             "-ofc", str(self.col_offset),
             "-fnr", str(self.row_final),
@@ -232,12 +236,12 @@ class PolSARpro:
             program_path,
             "-id", self.input_dir,
             "-od", self.output_dir,
-            "-iodf", self.pol_type,    # "S2", "C3", "T3"
+            "-iodf", self.pol_type,        # "S2", "C3", "T3"
             "-ofr", str(self.row_offset),
             "-ofc", str(self.col_offset),
             "-fnr", str(self.row_final),
             "-fnc", str(self.col_final),
-            "-mod", mode,
+            "-mod", mode,                  # 分解模式 "Y4O", "Y4R", "S4R"
             "-nwr", str(window_size_row),
             "-nwc", str(window_size_col),
             "-mask", self.mask_file
