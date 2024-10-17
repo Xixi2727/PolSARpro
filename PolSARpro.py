@@ -347,47 +347,6 @@ class PolSARpro:
                 self.create_bmp_file(os.path.join(new_dir, input_file), os.path.join(self.input_dir, f"Cloude_{os.path.splitext(input_file)[0]}_dB.bmp"), "float", "db10", "gray", 1, 0, 0, "black")
         self.create_pauli_rgb_file(new_dir, os.path.join(self.input_dir, "Cloude_RGB.bmp"), 1, 0, 0, 0, 0, 0, 0)
 
-    def orientation_compensation(self, window_size_row, window_size_col):
-        if self.pol_format == "S2":
-            new_dir = os.path.abspath(os.path.join(self.input_dir, os.path.pardir, os.path.basename(self.root_dir) + "_POC"))
-        else:
-            new_dir = os.path.abspath(os.path.join(self.input_dir, os.path.pardir, os.path.basename(self.root_dir) + "_POC", self.pol_format))
-        program_path = os.path.join(self.soft_path, "data_process_sngl", "orientation_estimation.exe")
-        command = [
-            program_path,
-            "-id", self.input_dir,
-            "-od", new_dir,
-            "-iodf", self.pol_format,    # "S2", "C3", "T3"
-            "-ofr", str(self.row_offset),
-            "-ofc", str(self.col_offset),
-            "-fnr", str(self.row_final),
-            "-fnc", str(self.col_final),
-            "-nwr", str(window_size_row),
-            "-nwc", str(window_size_col),
-            "-mask", self.mask_file
-        ]
-        subprocess.run(command)
-        program_path = os.path.join(self.soft_path, "data_process_sngl", "orientation_correction.exe")
-        command = [
-            program_path,
-            "-id", self.input_dir,
-            "-od", new_dir,
-            "-if", os.path.join(self.input_dir, "orientation_estimation.bin"),
-            "-iodf", self.pol_format,
-            "-ofr", str(self.row_offset),
-            "-ofc", str(self.col_offset),
-            "-fnr", str(self.row_final),
-            "-fnc", str(self.col_final),
-            "-mask", self.mask_file
-        ]
-        subprocess.run(command)
-        shutil.copy(os.path.join(self.input_dir, "mask_valid_pixels.bin"), os.path.join(new_dir, "mask_valid_pixels.bin"))
-        self.input_dir = new_dir
-        self.output_dir = new_dir
-        self.mask_file = os.path.join(new_dir, "mask_valid_pixels.bin")
-        self.create_pauli_rgb_file(self.input_dir, os.path.join(self.input_dir, "PauliRGB.bmp"), 1, 0, 0, 0, 0, 0, 0)
-        self.create_bmp_file(os.path.join(new_dir, "orientation_estimation.bin"), os.path.join(new_dir, "orientation_estimation.bmp"), "float", "real", "jet", 0, -90, 90, "black")
-
     def process_elements(self, element_index, process_format):
         program_path = os.path.join(self.soft_path, "data_process_sngl", "process_elements.exe")
         command = [
@@ -435,6 +394,72 @@ class PolSARpro:
         subprocess.run(command)
         self.create_bmp_file(os.path.join(self.output_dir, "Ro"+element_index+".bin"), os.path.join(self.output_dir, "Ro"+element_index+"_mod.bmp"), "cmplx", "mod", "jet", 0, 0, 1, "black")
         self.create_bmp_file(os.path.join(self.output_dir, "Ro"+element_index+".bin"), os.path.join(self.output_dir, "Ro"+element_index+"_pha.bmp"), "cmplx", "pha", "hsv", 0, -180, 180, "black")
+
+    def orientation_compensation(self, window_size_row, window_size_col):
+        if self.pol_format == "S2":
+            new_dir = os.path.abspath(os.path.join(self.input_dir, os.path.pardir, os.path.basename(self.root_dir) + "_POC"))
+        else:
+            new_dir = os.path.abspath(os.path.join(self.input_dir, os.path.pardir, os.path.basename(self.root_dir) + "_POC", self.pol_format))
+        program_path = os.path.join(self.soft_path, "data_process_sngl", "orientation_estimation.exe")
+        command = [
+            program_path,
+            "-id", self.input_dir,
+            "-od", new_dir,
+            "-iodf", self.pol_format,    # "S2", "C3", "T3"
+            "-ofr", str(self.row_offset),
+            "-ofc", str(self.col_offset),
+            "-fnr", str(self.row_final),
+            "-fnc", str(self.col_final),
+            "-nwr", str(window_size_row),
+            "-nwc", str(window_size_col),
+            "-mask", self.mask_file
+        ]
+        subprocess.run(command)
+        program_path = os.path.join(self.soft_path, "data_process_sngl", "orientation_correction.exe")
+        command = [
+            program_path,
+            "-id", self.input_dir,
+            "-od", new_dir,
+            "-if", os.path.join(self.input_dir, "orientation_estimation.bin"),
+            "-iodf", self.pol_format,
+            "-ofr", str(self.row_offset),
+            "-ofc", str(self.col_offset),
+            "-fnr", str(self.row_final),
+            "-fnc", str(self.col_final),
+            "-mask", self.mask_file
+        ]
+        subprocess.run(command)
+        shutil.copy(os.path.join(self.input_dir, "mask_valid_pixels.bin"), os.path.join(new_dir, "mask_valid_pixels.bin"))
+        self.input_dir = new_dir
+        self.output_dir = new_dir
+        self.mask_file = os.path.join(new_dir, "mask_valid_pixels.bin")
+        self.create_pauli_rgb_file(self.input_dir, os.path.join(self.input_dir, "PauliRGB.bmp"), 1, 0, 0, 0, 0, 0, 0)
+        self.create_bmp_file(os.path.join(new_dir, "orientation_estimation.bin"), os.path.join(new_dir, "orientation_estimation.bmp"), "float", "real", "jet", 0, -90, 90, "black")
+
+    def basis_change(self, orientation_angle, ellipticity_angle):
+        if self.pol_format == "S2":
+            new_dir = os.path.abspath(os.path.join(self.input_dir, os.path.pardir, os.path.basename(self.root_dir) + "_ELL"))
+        else:
+            new_dir = os.path.abspath(os.path.join(self.input_dir, os.path.pardir, os.path.basename(self.root_dir) + "_ELL", self.pol_format))
+        program_path = os.path.join(self.soft_path, "basis_change", "basis_change.exe")
+        command = [
+            program_path,
+            "-id", self.input_dir,
+            "-od", new_dir,
+            "-iodf", self.pol_format,    # "S2", "C3", "T3"
+            "-ofr", str(self.row_offset),
+            "-ofc", str(self.col_offset),
+            "-fnr", str(self.row_final),
+            "-fnc", str(self.col_final),
+            "-phi", str(orientation_angle),
+            "-tau", str(ellipticity_angle),
+        ]
+        subprocess.run(command)
+        self.input_dir = new_dir
+        self.output_dir = new_dir
+        self.create_mask_valid_pixels()
+        self.mask_file = os.path.join(new_dir, "mask_valid_pixels.bin")
+        self.create_bmp_file(self.mask_file, os.path.join(new_dir, "mask_valid_pixels.bmp"), "float", "real", "jet", 0, 0, 1, "black")
 
 
 # class Tools(PolSARpro):
