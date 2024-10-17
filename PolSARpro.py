@@ -122,12 +122,11 @@ class PolSARpro:
             new_dir = os.path.abspath(os.path.join(self.input_dir, os.path.pardir, os.path.basename(self.root_dir) + "_PRE", input_output_format[-2:]))
         if not os.path.exists(new_dir):
             os.makedirs(new_dir)
-        self.output_dir = new_dir
         program_path = os.path.join(self.soft_path, "speckle_filter", "an_yang_filter.exe")
         command = [
             program_path,
             "-id", self.input_dir,
-            "-od", self.output_dir,
+            "-od", new_dir,
             "-iodf", input_output_format,              # 输入-输出格式（单格式代表输入输出格式相同） "S2C3", "S2C4", "S2T3", "S2T4", "C2", "C3", "C4", "T2", "T3", "T4", "SPP", "IPP"
             "-ofr", str(self.row_offset),
             "-ofc", str(self.col_offset),
@@ -141,13 +140,15 @@ class PolSARpro:
             "-swc", str(searching_window_size_col),    # 搜索窗口列大小
             "-mask", self.mask_file
         ]
-        subprocess.run(command, text=True, stdout=None, stderr=None)
-        shutil.copy(os.path.join(self.input_dir, "config.txt"), os.path.join(self.output_dir, "config.txt"))
-        self.input_dir = self.output_dir
+        subprocess.run(command)
+        shutil.copy(os.path.join(self.input_dir, "config.txt"), os.path.join(new_dir, "config.txt"))
+        self.input_dir = new_dir
+        self.output_dir = new_dir
         if len(input_output_format) == 4:
             self.pol_format = input_output_format[-2:]
         self.create_mask_valid_pixels()
-        self.create_bmp_file(os.path.join(self.output_dir, "mask_valid_pixels.bin"), os.path.join(self.output_dir, "mask_valid_pixels.bmp"), "float", "real", "jet", 0, 0, 1, "black")
+        self.mask_file = os.path.join(new_dir, "mask_valid_pixels.bin")
+        self.create_bmp_file(self.mask_file, os.path.join(self.output_dir, "mask_valid_pixels.bmp"), "float", "real", "jet", 0, 0, 1, "black")
 
     def lee_refined_filter(self, input_output_format, num_looks, window_size):
         new_dir = os.path.abspath(os.path.join(self.root_dir, os.path.pardir, os.path.basename(self.root_dir) + "_LEE", self.pol_format))
@@ -155,7 +156,6 @@ class PolSARpro:
             new_dir = os.path.abspath(os.path.join(self.input_dir, os.path.pardir, os.path.basename(self.root_dir) + "_LEE", input_output_format[-2:]))
         if not os.path.exists(new_dir):
             os.makedirs(new_dir)
-        self.output_dir = new_dir
         program_path = os.path.join(self.soft_path, "speckle_filter", "lee_refined_filter.exe")
         command = [
             program_path,
@@ -171,12 +171,14 @@ class PolSARpro:
             "-mask", self.mask_file
         ]
         subprocess.run(command)
-        shutil.copy(os.path.join(self.input_dir, "config.txt"), os.path.join(self.output_dir, "config.txt"))
-        self.input_dir = self.output_dir
+        shutil.copy(os.path.join(self.input_dir, "config.txt"), os.path.join(new_dir, "config.txt"))
+        self.input_dir = new_dir
+        self.output_dir = new_dir
         if len(input_output_format) == 4:
             self.pol_format = input_output_format[-2:]
         self.create_mask_valid_pixels()
-        self.create_bmp_file(os.path.join(self.output_dir, "mask_valid_pixels.bin"), os.path.join(self.output_dir, "mask_valid_pixels.bmp"), "float", "real", "jet", 0, 0, 1, "black")
+        self.mask_file = os.path.join(new_dir, "mask_valid_pixels.bin")
+        self.create_bmp_file(self.mask_file, os.path.join(self.output_dir, "mask_valid_pixels.bmp"), "float", "real", "jet", 0, 0, 1, "black")
 
     def h_a_alpha_decomposition(self, flag_parameters, flag_h_a_alpha, flag_comb_ha, flag_comb_h1ma, flag_comb_1mha, flag_comb_1mh1ma, window_size_row, window_size_col):
         if self.pol_format == "S2":
