@@ -254,9 +254,10 @@ class PolSARpro:
             "-mask", self.mask_file
         ]
         subprocess.run(command)
-        input_files = ["Yamaguchi4_Y4O_Odd.bin", "Yamaguchi4_Y4O_Dbl.bin", "Yamaguchi4_Y4O_Vol.bin", "Yamaguchi4_Y4O_Hlx.bin"]
+        input_files = ["Yamaguchi4_"+mode+"_Odd.bin", "Yamaguchi4_"+mode+"_Dbl.bin", "Yamaguchi4_"+mode+"_Vol.bin", "Yamaguchi4_"+mode+"_Hlx.bin"]
         for input_file in input_files:
             self.create_bmp_file(os.path.join(self.output_dir, input_file), os.path.join(self.output_dir, f"{os.path.splitext(input_file)[0]}_db.bmp"), "float", "db10", "gray", 1, 0, 1, "black")
+        self.create_rgb_file(os.path.join(self.output_dir, input_files[0]), os.path.join(self.output_dir, input_files[1]), os.path.join(self.output_dir, input_files[2]), os.path.join(self.output_dir, "Yamaguchi4_"+mode+"_RGB.bmp"), 1, 0, 0, 0, 0, 0, 0)
 
     def huynen_decomposition(self, input_output_format, window_size_row, window_size_col):
         new_dir = os.path.abspath(os.path.join(self.input_dir, os.path.pardir, os.path.basename(self.root_dir) + "_JRH", self.pol_format))
@@ -375,7 +376,10 @@ class PolSARpro:
             file_name = self.pol_format[0] + element_index + "_pha"
         else:
             file_name = self.pol_format[0] + element_index + "_mod"
-        self.create_bmp_file(os.path.join(self.output_dir, file_name+".bin"), os.path.join(self.output_dir, file_name+".bmp"), "float", "real", "gray", 1, 0, 1, "black")
+        if process_format == "pha":
+            self.create_bmp_file(os.path.join(self.output_dir, file_name + ".bin"), os.path.join(self.output_dir, file_name + ".bmp"), "float", "real", "hsv", 0, -180, 180, "black")
+        else:
+            self.create_bmp_file(os.path.join(self.output_dir, file_name + ".bin"), os.path.join(self.output_dir, file_name + ".bmp"), "float", "real", "gray", 1, 0, 0, "black")
 
     def process_corr(self, element_index, window_size_row, window_size_col):
         program_path = os.path.join(self.soft_path, "data_process_sngl", "process_corr.exe")
@@ -383,7 +387,7 @@ class PolSARpro:
             program_path,
             "-id", self.input_dir,
             "-od", self.output_dir,
-            "-iodf", self.pol_format,
+            "-iodf", self.pol_format,    # "S2m", "S2b", "C2", "C3", "C4", "T3", "T4", "SPP"
             "-ofr", str(self.row_offset),
             "-ofc", str(self.col_offset),
             "-fnr", str(self.row_final),
