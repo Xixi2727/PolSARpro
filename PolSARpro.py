@@ -406,6 +406,8 @@ class PolSARpro:
             new_dir = os.path.abspath(os.path.join(self.input_dir, os.path.pardir, os.path.basename(self.root_dir) + "_POC"))
         else:
             new_dir = os.path.abspath(os.path.join(self.input_dir, os.path.pardir, os.path.basename(self.root_dir) + "_POC", self.pol_format))
+        if not os.path.exists(new_dir):
+            os.makedirs(new_dir)
         program_path = os.path.join(self.soft_path, "data_process_sngl", "orientation_estimation.exe")
         command = [
             program_path,
