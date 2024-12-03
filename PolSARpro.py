@@ -160,7 +160,7 @@ class PolSARpro:
         command = [
             program_path,
             "-id", self.input_dir,
-            "-od", self.output_dir,
+            "-od", new_dir,
             "-iodf", input_output_format,    # "S2C3", "S2C4", "S2T3", "S2T4", "C2", "C3", "C4", "T2", "T3", "T4", "SPP", "IPP"
             "-ofr", str(self.row_offset),
             "-ofc", str(self.col_offset),
