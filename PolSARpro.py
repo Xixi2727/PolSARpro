@@ -437,6 +437,7 @@ class PolSARpro:
             "-mask", self.mask_file
         ]
         subprocess.run(command)
+        shutil.copy(os.path.join(self.input_dir, "config.txt"), os.path.join(new_dir, "config.txt"))
         shutil.copy(os.path.join(self.input_dir, "mask_valid_pixels.bin"), os.path.join(new_dir, "mask_valid_pixels.bin"))
         self.input_dir = new_dir
         self.output_dir = new_dir
@@ -465,6 +466,7 @@ class PolSARpro:
             "-tau", str(ellipticity_angle),
         ]
         subprocess.run(command)
+        shutil.copy(os.path.join(self.input_dir, "config.txt"), os.path.join(new_dir, "config.txt"))
         self.input_dir = new_dir
         self.output_dir = new_dir
         self.create_mask_valid_pixels()
